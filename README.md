@@ -1,6 +1,14 @@
 # Python-Arduino-Serial-Communication
 A Basic Data Link between a Python Program (on Windows) and an Arduino via Serial exchanging Data in Both ways
 
+Requirements:
+pySerial library
+
+General:
+A USB Cable capable of sending Data not only Charging
+Arduino IDE for Flashing software
+
+
 Data Rates of serial:   High Datacount (integers floats strings etc )but low Refresh rate about 3Hz Max maybe upgradeable
 Data Rates of Hardware: Mikrocontrollers with different Chips may require different Looprates in the Python Code
                                     
