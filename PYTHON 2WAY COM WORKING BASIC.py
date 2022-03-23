@@ -13,7 +13,13 @@
 # 
 #
 #Teststring for the Serial Monitor of Arduino IDE:
-#    start,0,123,123.456,abcde,end\n
+#   
+# 
+# 
+# 
+# 
+# 
+#  start,0,123,123.456,abcde,end\n
 
 
 
@@ -25,15 +31,20 @@ import time
 #
 ############################################################################
 #(check for your COM port in the device manager or easier the Arduino IDE )
-COM_port_arduino	=	"COM12"
+COM_port_arduino	=	"COM5"
 BAUD_rate_arduino	=	9600
 
 #for how many iterations shall be tested here
-Test_iterations		=	100
+Test_iterations		=	200
 #How fast to iterate
-Loop_speed			=	0.3		#[s]
+Loop_speed			=	0.8		#[s]
 
 #FYI: good values are about 0.3 s loopspeed as package loss increases if loop rate gets faster
+
+#FYI: Different Mikrocontroller Boards may need a slower pace to work correctly 
+# 											tested
+# 											Arduino Uno: 	0.4	s Loopspeed 
+# 											Arduino Mega:	1	s Loopspeed
 ############################################################################
 
 
@@ -46,13 +57,14 @@ indexcom			=	0
 int_data			=	123
 float_data			=	123.456
 string_data			=	"abcde"
-paket_loss_index	= 	0
+package_reciv_index	= 	0
+package_send_index	=	0
 start_time			=   time.time()
 #iterable
 i					=	0
 
 try:	
-		Serialreader = serial.Serial(port=COM_port_arduino, baudrate=BAUD_rate_arduino,timeout=.1, rtscts=True)
+		Serialreader = serial.Serial(port=COM_port_arduino, baudrate=BAUD_rate_arduino,timeout=1, rtscts=True)
 		#Serialreader.flushInput()
 		time.sleep(0.05)
 except:
@@ -85,6 +97,7 @@ while i<Test_iterations:
 				string_data_received		=	serialread_string_splitted[4]
 
 				indexcom=indexcom_received+1
+				package_reciv_index+=1
 
 			
 			#Data is always send 3 packets a time so rest needs to be cleared out
@@ -99,17 +112,27 @@ while i<Test_iterations:
 
 	DATA_to_SEND = "start" +","+ str(indexcom) +","+ str(int_data) +","+ str(float_data) +","+ string_data +","+ "end" +"\n"
 
-	print("DATA send:  "+ DATA_to_SEND)
+	print("DATA send:        "+ DATA_to_SEND)
+	
+
+	time.sleep(Loop_speed)
+
 	#send data 3 pakets:
 	Serialreader.write(bytes(DATA_to_SEND, 'utf-8'))
 	Serialreader.write(bytes(DATA_to_SEND, 'utf-8'))
 	Serialreader.write(bytes(DATA_to_SEND, 'utf-8'))
 
+	lost_total= package_send_index-package_reciv_index
+	if package_send_index>1:
+		average_paket_loss=100-(package_reciv_index/package_send_index)*100
+	else:
+		average_paket_loss=0
+
+	package_send_index+=1
+
+
 	# calculate packet loss rate and total pakage loss
 	i =i+1
-	paket_loss_index= paket_loss_index+3
-	average_paket_loss = 100-((indexcom+6)/paket_loss_index)*100
-	lost_total = -(indexcom+6-paket_loss_index)/3
 	#calculate time of connection without major error(package read wrong as for e.g.  a comma gets lost and the data is invalid)
 	connection_time = time.time() -start_time
 
@@ -117,6 +140,6 @@ while i<Test_iterations:
 	#print data to the Terminal of python environment
 	print( "Package Nr:" + str(i) + "  PAKET_LOSS:  " + str(int(average_paket_loss)) + " %" + "  lost total: " + str(int(lost_total))+"    time of connection: " + str(int(connection_time)) +"seconds"  )  
 
-	time.sleep(Loop_speed)
+
 
 	#EOLOOP
